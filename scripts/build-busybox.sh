@@ -147,7 +147,7 @@ configure_busybox() {
     log_info "Copied config from ${BUSYBOX_CONFIG}"
 
     # Update config against the BusyBox source tree
-    yes "" | make oldconfig 2>&1 | while IFS= read -r line; do
+    make oldconfig < /dev/null 2>&1 | while IFS= read -r line; do
         if echo "$line" | grep -qiE "(error|warning)"; then
             log_info "  oldconfig: ${line}"
         fi
