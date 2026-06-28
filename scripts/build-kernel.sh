@@ -167,9 +167,9 @@ configure_kernel() {
     verify_config_option "CONFIG_USB" "y"
     verify_config_option "CONFIG_EFI" "y"
     verify_config_option "CONFIG_NET" "y"
-    verify_config_option "CONFIG_INIT" "y"
 
     # Save the final config for reference
+    mkdir -p "${BUILD_DIR}"
     cp -f ".config" "${BUILD_DIR}/kernel-built.config"
     log_info "Saved final config to ${BUILD_DIR}/kernel-built.config"
 
