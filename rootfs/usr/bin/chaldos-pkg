@@ -1,0 +1,566 @@
+#!/bin/sh
+#
+# chaldos-pkg — ChaldOS Package Manager
+# ========================================
+# Manages packages for ChaldOS Linux.
+#   - Binary packages (.cdos) from official repo
+#   - CDOSUP source builds (like AUR, requires CDOSBUILD recipe)
+#
+# Repository:
+#   https://github.com/ChaldS-mods/cdosup
+#
+# Usage:
+#   chaldos-pkg -S <pkg>       Install binary package
+#   chaldos-pkg -C <pkg>       Install from CDOSUP (build from source/CDOSBUILD)
+#   chaldos-pkg -Ss <query>    Search packages
+#   chaldos-pkg -Si <pkg>      Show package info
+#   chaldos-pkg -R <pkg>       Remove package
+#   chaldos-pkg -U <file>      Install from local .cdos file
+#   chaldos-pkg -Q             List installed packages
+#   chaldos-pkg -Sy            Sync package database
+#   chaldos-pkg -Su            Upgrade all packages
+#   chaldos-pkg -h             Show this help
+#
+# CDOSUP (AUR-like) — users submit CDOSBUILD files to:
+#   https://github.com/ChaldS-mods/cdosup/
+#   chaldos-pkg -C <pkg>  =>  downloads CDOSBUILD, builds, and installs
+#
+
+# ─── Config ───────────────────────────────────────────────────────────
+CDOSUP_DIR="/etc/cdosup"
+INSTALLED_DIR="${CDOSUP_DIR}/installed"
+CACHE_DIR="${CDOSUP_DIR}/cache"
+BUILD_DIR="${CDOSUP_DIR}/build"
+DB_FILE="${CDOSUP_DIR}/packages.db"
+CONF_FILE="${CDOSUP_DIR}/cdosup.conf"
+
+# Default repo URLs (may be overridden by cdosup.conf)
+CDOSUP_REPO="https://raw.githubusercontent.com/ChaldS-mods/cdosup/main"
+CDOSUP_API="https://api.github.com/repos/ChaldS-mods/cdosup"
+BINARY_REPO="https://github.com/ChaldS-mods/cdosup/releases/latest/download"
+
+# Source config file if it exists
+if [ -f "$CONF_FILE" ]; then
+    . "$CONF_FILE" 2>/dev/null || true
+fi
+
+# Colors (if terminal supports)
+if [ -t 1 ]; then
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    CYAN='\033[0;36m'
+    NC='\033[0m'
+else
+    RED=''; GREEN=''; YELLOW=''; CYAN=''; NC=''
+fi
+
+# ─── Helpers ──────────────────────────────────────────────────────────
+msg()     { echo -e "${GREEN}[✓]${NC} $*"; }
+warn()    { echo -e "${YELLOW}[!]${NC} $*"; }
+error()   { echo -e "${RED}[✗]${NC} $*"; }
+info()    { echo -e "${CYAN}[i]${NC} $*"; }
+die()     { error "$1"; exit 1; }
+
+ensure_dirs() {
+    mkdir -p "${INSTALLED_DIR}" "${CACHE_DIR}" "${BUILD_DIR}" 2>/dev/null
+}
+
+has_cmd() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# ─── Package Database ─────────────────────────────────────────────────
+db_sync() {
+    info "Syncing package database..."
+    ensure_dirs
+
+    local db_url="${CDOSUP_REPO}/packages.db"
+    local tmp_db="${CACHE_DIR}/packages.db.tmp"
+
+    if has_cmd curl; then
+        curl -sfL "$db_url" -o "$tmp_db" 2>/dev/null || {
+            warn "Could not fetch package database (no connection?)"
+            [ -f "$DB_FILE" ] && msg "Using cached database."
+            return 0
+        }
+    elif has_cmd wget; then
+        wget -q "$db_url" -O "$tmp_db" 2>/dev/null || {
+            warn "Could not fetch package database"
+            [ -f "$DB_FILE" ] && msg "Using cached database."
+            return 0
+        }
+    else
+        warn "No curl or wget available. Using cached database."
+        return 0
+    fi
+
+    if [ -s "$tmp_db" ]; then
+        mv "$tmp_db" "$DB_FILE"
+        msg "Package database synced."
+    else
+        rm -f "$tmp_db"
+        warn "Empty database received."
+    fi
+}
+
+db_search() {
+    local query="$1"
+    if [ ! -f "$DB_FILE" ]; then
+        info "No package database. Run 'chaldos-pkg -Sy' first."
+        return 1
+    fi
+    # Format: pkgname|pkgver|pkgdesc|arch|license|depends
+    while IFS='|' read -r name ver desc arch lic deps; do
+        case "$name" in
+            *"${query}"*) printf "  %-20s %-10s %s\n" "$name" "$ver" "$desc" ;;
+        esac
+    done < "$DB_FILE"
+}
+
+db_info() {
+    local pkgname="$1"
+    if [ ! -f "$DB_FILE" ]; then
+        info "No package database. Run 'chaldos-pkg -Sy' first."
+        return 1
+    fi
+    while IFS='|' read -r name ver desc arch lic deps; do
+        if [ "$name" = "$pkgname" ]; then
+            echo "  Package:    ${name}"
+            echo "  Version:    ${ver}"
+            echo "  Description: ${desc}"
+            echo "  Architecture: ${arch}"
+            echo "  License:    ${lic}"
+            echo "  Depends:    ${deps:-none}"
+            return 0
+        fi
+    done < "$DB_FILE"
+    echo "  Package '${pkgname}' not found in database."
+    return 1
+}
+
+# ─── Package Installation / Removal ───────────────────────────────────
+pkg_install_file() {
+    local file="$1"
+    local name="${2:-}"
+    local force="${3:-}"
+
+    if [ ! -f "$file" ]; then
+        die "File not found: $file"
+    fi
+
+    # Extract metadata
+    local tmp_dir="${CACHE_DIR}/.extract_$$"
+    mkdir -p "$tmp_dir"
+    tar -xzf "$file" -C "$tmp_dir" 2>/dev/null || die "Invalid .cdos package: $file"
+
+    # Parse CDOSINFO
+    if [ -f "${tmp_dir}/CDOSINFO" ]; then
+        local pkgname=""
+        local pkgver=""
+        while IFS='=' read -r key val; do
+            key="$(echo "$key" | tr -d ' \t')"
+            val="$(echo "$val" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+            case "$key" in
+                pkgname) pkgname="$val" ;;
+                pkgver)  pkgver="$val" ;;
+            esac
+        done < "${tmp_dir}/CDOSINFO"
+    fi
+
+    if [ -z "$pkgname" ]; then
+        rm -rf "$tmp_dir"
+        die "CDOSINFO missing pkgname in: $file"
+    fi
+
+    # Check if already installed
+    if [ -f "${INSTALLED_DIR}/${pkgname}/CDOSINFO" ] && [ "$force" != "force" ]; then
+        local old_ver=""
+        while IFS='=' read -r key val; do
+            key="$(echo "$key" | tr -d ' \t')"
+            val="$(echo "$val" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+            [ "$key" = "pkgver" ] && old_ver="$val"
+        done < "${INSTALLED_DIR}/${pkgname}/CDOSINFO"
+        warn "${pkgname} ${old_ver:-unknown} is already installed."
+        echo "  Use chaldos-pkg -S ${pkgname} to reinstall."
+        rm -rf "$tmp_dir"
+        return 0
+    fi
+
+    info "Installing ${pkgname}..."
+    mkdir -p "${INSTALLED_DIR}/${pkgname}"
+
+    # Copy CDOSINFO to installed record
+    if [ -f "${tmp_dir}/CDOSINFO" ]; then
+        cp "${tmp_dir}/CDOSINFO" "${INSTALLED_DIR}/${pkgname}/"
+    fi
+
+    # Install files to root
+    local file_count=0
+    for item in "${tmp_dir}"/*; do
+        local base="$(basename "$item")"
+        [ "$base" = "CDOSINFO" ] && continue
+
+        if [ -d "$item" ]; then
+            # Copy directory tree to /
+            (cd "$tmp_dir" && tar cf - "$base" 2>/dev/null) | (cd / && tar xf - 2>/dev/null) || {
+                warn "Failed to extract to / (need root?)"
+                rm -rf "$tmp_dir"
+                die "Permission denied. Try: sudo chaldos-pkg <args>"
+            }
+            file_count=$((file_count + 1))
+        elif [ -f "$item" ]; then
+            cp -f "$item" "/${base}" 2>/dev/null || {
+                warn "Failed to copy $base to / (need root?)"
+                rm -rf "$tmp_dir"
+                die "Permission denied. Try: sudo chaldos-pkg <args>"
+            }
+            file_count=$((file_count + 1))
+        fi
+    done
+
+    # Record manifest (files installed from the archive)
+    tar -tzf "$file" 2>/dev/null | grep -v '^CDOSINFO$' | grep -v '/$' > "${INSTALLED_DIR}/${pkgname}/manifest" 2>/dev/null || true
+
+    rm -rf "$tmp_dir"
+    msg "Installed ${pkgname} ${pkgver:-}"
+}
+
+pkg_install_binary() {
+    local pkgname="$1"
+    local force="${2:-}"
+
+    if [ ! -f "$DB_FILE" ]; then
+        die "No package database. Run 'chaldos-pkg -Sy' first."
+    fi
+
+    # Resolve package info from DB
+    local pkgver=""
+    local deps=""
+    while IFS='|' read -r name ver desc arch lic depstr; do
+        if [ "$name" = "$pkgname" ]; then
+            pkgver="$ver"
+            deps="$depstr"
+            break
+        fi
+    done < "$DB_FILE"
+
+    if [ -z "$pkgver" ]; then
+        die "Package '${pkgname}' not found in database."
+    fi
+
+    # Install dependencies
+    if [ -n "$deps" ] && [ "$deps" != "none" ]; then
+        info "Resolving dependencies: ${deps}..."
+        OLD_IFS="$IFS"; IFS=','
+        for dep in $deps; do
+            dep="$(echo "$dep" | tr -d ' \t')"
+            [ -z "$dep" ] && continue
+            if [ ! -f "${INSTALLED_DIR}/${dep}/CDOSINFO" ]; then
+                info "Installing dependency: ${dep}..."
+                pkg_install_binary "$dep" || warn "Failed to install dependency: ${dep}"
+            fi
+        done
+        IFS="$OLD_IFS"
+    fi
+
+    # Download binary package
+    local cache_file="${CACHE_DIR}/${pkgname}-${pkgver}.cdos"
+    if [ ! -f "$cache_file" ]; then
+        local pkg_url="${BINARY_REPO}/${pkgname}-${pkgver}-x86_64.cdos"
+        info "Downloading ${pkgname} ${pkgver}..."
+        if has_cmd curl; then
+            curl -fL "$pkg_url" -o "$cache_file" 2>/dev/null || die "Download failed: $pkg_url"
+        elif has_cmd wget; then
+            wget -q "$pkg_url" -O "$cache_file" 2>/dev/null || die "Download failed: $pkg_url"
+        else
+            die "No curl or wget to download package."
+        fi
+    fi
+
+    pkg_install_file "$cache_file" "$pkgname" "$force"
+}
+
+pkg_remove() {
+    local pkgname="$1"
+
+    if [ ! -f "${INSTALLED_DIR}/${pkgname}/CDOSINFO" ] && [ ! -f "${INSTALLED_DIR}/${pkgname}/manifest" ]; then
+        die "Package '${pkgname}' is not installed."
+    fi
+
+    info "Removing ${pkgname}..."
+
+    # Read manifest and remove files
+    if [ -f "${INSTALLED_DIR}/${pkgname}/manifest" ]; then
+        while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ -f "/${file}" ] && rm -f "/${file}" 2>/dev/null || true
+        done < "${INSTALLED_DIR}/${pkgname}/manifest"
+    fi
+
+    # Remove installed record
+    rm -rf "${INSTALLED_DIR}/${pkgname}"
+
+    msg "Removed ${pkgname}."
+}
+
+pkg_list_installed() {
+    local count=0
+    for dir in "${INSTALLED_DIR}"/*/; do
+        [ -d "$dir" ] || continue
+        local name="$(basename "$dir")"
+        local ver=""
+        if [ -f "${dir}/CDOSINFO" ]; then
+            while IFS='=' read -r key val; do
+                key="$(echo "$key" | tr -d ' \t')"
+                [ "$key" = "pkgver" ] && ver="$(echo "$val" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+            done < "${dir}/CDOSINFO"
+        fi
+        printf "  %-20s %s\n" "${name}" "${ver:-unknown}"
+        count=$((count + 1))
+    done
+    [ "$count" -eq 0 ] && echo "  (no packages installed)"
+}
+
+# ─── CDOSUP (AUR-like) — Build from CDOSBUILD ─────────────────────────
+cdosup_build() {
+    local pkgname="$1"
+
+    if ! has_cmd curl && ! has_cmd wget; then
+        die "curl or wget needed for CDOSUP."
+    fi
+
+    ensure_dirs
+    local pkg_dir="${BUILD_DIR}/${pkgname}"
+    rm -rf "$pkg_dir"
+    mkdir -p "$pkg_dir"
+
+    # Download CDOSBUILD
+    local build_url="${CDOSUP_REPO}/packages/${pkgname}/CDOSBUILD"
+    local build_file="${pkg_dir}/CDOSBUILD"
+    info "Fetching CDOSBUILD for '${pkgname}'..."
+    info "  ${build_url}"
+
+    if has_cmd curl; then
+        curl -sfL "$build_url" -o "$build_file" 2>/dev/null || die "CDOSBUILD not found for '${pkgname}'."
+    else
+        wget -q "$build_url" -O "$build_file" 2>/dev/null || die "CDOSBUILD not found for '${pkgname}'."
+    fi
+
+    if [ ! -s "$build_file" ]; then
+        rm -rf "$pkg_dir"
+        die "Empty CDOSBUILD for '${pkgname}'."
+    fi
+
+    # Source the CDOSBUILD to get variables
+    # NOTE: CDOSBUILD is a shell script that sets variables and defines functions
+    . "$build_file" || die "Failed to parse CDOSBUILD."
+
+    # Validate required fields
+    : "${pkgname:?CDOSBUILD missing pkgname}"
+    : "${pkgver:?CDOSBUILD missing pkgver}"
+    : "${source:=}"
+
+    info "Building ${pkgname} ${pkgver} from CDOSUP..."
+
+    # Prepare build env
+    export srcdir="${pkg_dir}/src"
+    export pkgdir="${pkg_dir}/pkg"
+    rm -rf "$srcdir" "$pkgdir"
+    mkdir -p "$srcdir" "$pkgdir"
+
+    # Download sources
+    _cdosup_download_sources "$pkgname" "$pkg_dir" "$source"
+
+    # Run build()
+    if type build >/dev/null 2>&1; then
+        info "Running build()..."
+        (cd "$srcdir" && build) || die "build() failed for ${pkgname}."
+    fi
+
+    # Run package()
+    if type package >/dev/null 2>&1; then
+        info "Running package()..."
+        (cd "$srcdir" && package) || die "package() failed for ${pkgname}."
+    fi
+
+    # Create .cdos package
+    local out_file="${CACHE_DIR}/${pkgname}-${pkgver}.cdos"
+    rm -f "$out_file"
+
+    # Build CDOSINFO
+    local cdosinfo="${pkg_dir}/CDOSINFO"
+    cat > "$cdosinfo" <<EOF
+pkgname = ${pkgname}
+pkgver = ${pkgver}
+pkgdesc = ${pkgdesc:-}
+arch = ${arch:-x86_64}
+license = ${license:-custom}
+depends = ${depends:-}
+EOF
+
+    (cd "$pkgdir" && tar -czf "$out_file" CDOSINFO usr/ 2>/dev/null) || {
+        warn "No usr/ directory in package output."
+        # Fallback: just create the CDOSINFO-only package
+        (cd "$pkg_dir" && tar -czf "$out_file" CDOSINFO 2>/dev/null) || true
+    }
+
+    if [ -f "$out_file" ]; then
+        msg "Package built: ${out_file}"
+        pkg_install_file "$out_file" "$pkgname" "force"
+    else
+        warn "No files produced by package(). Check CDOSBUILD."
+    fi
+
+    # Cleanup build dir
+    rm -rf "$pkg_dir"
+}
+
+_cdosup_download_sources() {
+    local pkgname="$1"
+    local pkg_dir="$2"
+    local src_spec="$3"
+
+    # source can be a space-separated list of URLs
+    local url=""
+    for url in $src_spec; do
+        [ -z "$url" ] && continue
+        local filename="$(basename "$url")"
+        local dest="${pkg_dir}/src/${filename}"
+
+        info "  Downloading: ${filename}"
+        if has_cmd curl; then
+            curl -sfL "$url" -o "$dest" 2>/dev/null || warn "Failed to download: $url"
+        elif has_cmd wget; then
+            wget -q "$url" -O "$dest" 2>/dev/null || warn "Failed to download: $url"
+        fi
+    done
+}
+
+# ─── Upgrade ──────────────────────────────────────────────────────────
+pkg_upgrade() {
+    info "Checking for upgrades..."
+    if [ ! -f "$DB_FILE" ]; then
+        die "No package database. Run 'chaldos-pkg -Sy' first."
+    fi
+
+    local upgraded=0
+    for _pkg_dir in "${INSTALLED_DIR}"/*/; do
+        [ -d "$_pkg_dir" ] || continue
+        local pkg_name="$(basename "$_pkg_dir")"
+        local installed_ver=""
+        local db_version=""
+
+        # Get installed version
+        if [ -f "${_pkg_dir}/CDOSINFO" ]; then
+            while IFS='=' read -r _key _val; do
+                _key="$(echo "$_key" | tr -d ' \t')"
+                _val="$(echo "$_val" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+                [ "$_key" = "pkgver" ] && installed_ver="$_val"
+            done < "${_pkg_dir}/CDOSINFO"
+        fi
+
+        # Find version in DB
+        while IFS='|' read -r _db_name _db_ver _rest; do
+            if [ "$_db_name" = "$pkg_name" ]; then
+                db_version="$_db_ver"
+                break
+            fi
+        done < "$DB_FILE"
+
+        if [ -n "$db_version" ] && [ "$db_version" != "$installed_ver" ]; then
+            info "Upgrading ${pkg_name}: ${installed_ver:-?} → ${db_version}"
+            pkg_install_binary "$pkg_name" "force"
+            upgraded=$((upgraded + 1))
+        fi
+    done
+
+    [ "$upgraded" -eq 0 ] && msg "All packages up to date."
+}
+
+# ─── Help ─────────────────────────────────────────────────────────────
+show_help() {
+    cat << 'EOF'
+chaldos-pkg — ChaldOS Package Manager
+
+Usage:
+  chaldos-pkg -S <pkg>       Install binary package
+  chaldos-pkg -C <pkg>       Install from CDOSUP (build from CDOSBUILD)
+  chaldos-pkg -Ss <query>    Search packages
+  chaldos-pkg -Si <pkg>      Show package info
+  chaldos-pkg -R <pkg>       Remove package
+  chaldos-pkg -U <file>      Install local .cdos file
+  chaldos-pkg -Q             List installed packages
+  chaldos-pkg -Sy            Sync package database
+  chaldos-pkg -Su            Upgrade all packages
+  chaldos-pkg -Syu           Sync + upgrade
+  chaldos-pkg -h             Show this help
+
+CDOSUP (AUR-like):
+  Submit CDOSBUILD recipes at: https://github.com/ChaldS-mods/cdosup
+  Packages are built from source automatically.
+
+Examples:
+  chaldos-pkg -Sy           Update package list
+  chaldos-pkg -S fuzzel     Install fuzzel (app launcher)
+  chaldos-pkg -C steam      Build & install steam from CDOSUP
+  chaldos-pkg -Ss browser   Search for browser packages
+  chaldos-pkg -R fuzzel     Remove fuzzel
+EOF
+}
+
+# ─── Main ─────────────────────────────────────────────────────────────
+main() {
+    [ $# -eq 0 ] && { show_help; exit 0; }
+
+    case "${1:-}" in
+        -S)
+            [ -z "${2:-}" ] && die "Usage: chaldos-pkg -S <package>"
+            ensure_dirs
+            pkg_install_binary "$2"
+            ;;
+        -C)
+            [ -z "${2:-}" ] && die "Usage: chaldos-pkg -C <package>"
+            ensure_dirs
+            cdosup_build "$2"
+            ;;
+        -Ss)
+            [ -z "${2:-}" ] && die "Usage: chaldos-pkg -Ss <query>"
+            db_search "$2"
+            ;;
+        -Si)
+            [ -z "${2:-}" ] && die "Usage: chaldos-pkg -Si <package>"
+            db_info "$2"
+            ;;
+        -R)
+            [ -z "${2:-}" ] && die "Usage: chaldos-pkg -R <package>"
+            pkg_remove "$2"
+            ;;
+        -U)
+            [ -z "${2:-}" ] && die "Usage: chaldos-pkg -U <file>"
+            pkg_install_file "$2" "" "force"
+            ;;
+        -Q)
+            pkg_list_installed
+            ;;
+        -Sy)
+            db_sync
+            ;;
+        -Su)
+            pkg_upgrade
+            ;;
+        -Syu)
+            db_sync && pkg_upgrade
+            ;;
+        -h|--help)
+            show_help
+            ;;
+        *)
+            error "Unknown option: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

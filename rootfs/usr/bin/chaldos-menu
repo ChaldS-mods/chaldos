@@ -1,0 +1,288 @@
+#!/bin/sh
+#
+# chaldos-menu — ChaldOS Start Menu
+# ===================================
+# A simple terminal-based application launcher.
+# Runs inside weston-terminal when the "ChaldOS" button is clicked.
+# If run from console (tty), displays directly.
+#
+
+# ─── Config ───────────────────────────────────────────────────────────
+# Detect if we're in Weston (Wayland) or console
+if [ -n "${WAYLAND_DISPLAY:-}" ] || [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+    IN_WAYLAND=true
+    LAUNCH="nohup"
+    SEPARATE="&"
+else
+    IN_WAYLAND=false
+    LAUNCH=""
+    SEPARATE=""
+fi
+
+CHALDOS_VERSION="$(cat /etc/chaldos/version 2>/dev/null || echo '1.0.0')"
+
+# ─── Colors ───────────────────────────────────────────────────────────
+if [ -t 1 ]; then
+    C_RESET='\033[0m'
+    C_RED='\033[0;31m'
+    C_GREEN='\033[0;32m'
+    C_YELLOW='\033[1;33m'
+    C_BLUE='\033[0;34m'
+    C_MAGENTA='\033[0;35m'
+    C_CYAN='\033[0;36m'
+    C_BOLD='\033[1m'
+    C_DIM='\033[2m'
+    C_INV='\033[7m'
+else
+    C_RESET=''; C_RED=''; C_GREEN=''; C_YELLOW=''
+    C_BLUE=''; C_MAGENTA=''; C_CYAN=''; C_BOLD=''; C_DIM=''; C_INV=''
+fi
+
+# ─── Draw header ──────────────────────────────────────────────────────
+draw_header() {
+    clear
+    echo ""
+    echo "  ${C_CYAN}╔══════════════════════════════════════╗${C_RESET}"
+    echo "  ${C_CYAN}║       ${C_BOLD}ChaldOS ${CHALDOS_VERSION}${C_RESET}${C_CYAN}              ║${C_RESET}"
+    echo "  ${C_CYAN}║      ${C_DIM}▼ Panel is on the bottom!${C_RESET}${C_CYAN}     ║${C_RESET}"
+    echo "  ${C_CYAN}╚══════════════════════════════════════╝${C_RESET}"
+    echo ""
+    echo "  ${C_BOLD}START MENU${C_RESET}"
+    echo "  ─────────"
+    echo ""
+}
+
+# ─── Show menu, return selection ──────────────────────────────────────
+show_menu() {
+    echo "  ${C_GREEN}1)${C_RESET}  Terminal"
+    echo "  ${C_GREEN}2)${C_RESET}  Install Packages (chaldos-pkg)"
+    echo "  ${C_GREEN}3)${C_RESET}  About ChaldOS"
+    echo "  ${C_GREEN}4)${C_RESET}  Weston Info"
+    echo "  ${C_GREEN}5)${C_RESET}  Reboot"
+    echo "  ${C_GREEN}6)${C_RESET}  Power Off"
+    echo "  ${C_GREEN}q)${C_RESET}  Close Menu"
+    echo ""
+    printf "  ${C_YELLOW}►${C_RESET} "
+    read -r choice
+    echo "$choice"
+}
+
+# ─── Run and wait ─────────────────────────────────────────────────────
+run_cmd() {
+    if [ "$IN_WAYLAND" = true ]; then
+        # In Wayland: launch in separate window, close menu
+        eval "$1" &
+        sleep 0.5
+        exit 0
+    else
+        # In console: run inline
+        clear
+        eval "$1"
+        echo ""
+        printf "${C_DIM}[Press Enter to continue]${C_RESET} "
+        read -r _
+    fi
+}
+
+# ─── Package Manager Interface ────────────────────────────────────────
+pkg_interface() {
+    clear
+    echo ""
+    echo "  ${C_CYAN}╔══════════════════════════════════════╗${C_RESET}"
+    echo "  ${C_CYAN}║       ${C_BOLD}chaldos-pkg Installer${C_RESET}${C_CYAN}          ║${C_RESET}"
+    echo "  ${C_CYAN}╚══════════════════════════════════════╝${C_RESET}"
+    echo ""
+    echo "  ${C_DIM}CDOSUP — AUR-like package repository${C_RESET}"
+    echo "  ${C_DIM}https://github.com/ChaldS-mods/cdosup${C_RESET}"
+    echo ""
+    echo "  ${C_GREEN}1)${C_RESET}  Search packages"
+    echo "  ${C_GREEN}2)${C_RESET}  Install a package"
+    echo "  ${C_GREEN}3)${C_RESET}  Build from CDOSUP (source)"
+    echo "  ${C_GREEN}4)${C_RESET}  Remove a package"
+    echo "  ${C_GREEN}5)${C_RESET}  List installed packages"
+    echo "  ${C_GREEN}6)${C_RESET}  Update package database"
+    echo "  ${C_GREEN}7)${C_RESET}  Upgrade all packages"
+    echo "  ${C_GREEN}b)${C_RESET}  Back to main menu"
+    echo ""
+    printf "  ${C_YELLOW}►${C_RESET} "
+    read -r pkg_choice
+
+    case "$pkg_choice" in
+        1)
+            printf "  Search for: "
+            read -r query
+            [ -n "$query" ] && chaldos-pkg -Ss "$query"
+            echo ""
+            printf "${C_DIM}[Press Enter]${C_RESET} "
+            read -r _
+            ;;
+        2)
+            printf "  Package name: "
+            read -r pkg
+            if [ -n "$pkg" ]; then
+                echo ""
+                chaldos-pkg -S "$pkg"
+            fi
+            echo ""
+            printf "${C_DIM}[Press Enter]${C_RESET} "
+            read -r _
+            ;;
+        3)
+            printf "  CDOSUP package: "
+            read -r pkg
+            if [ -n "$pkg" ]; then
+                echo ""
+                chaldos-pkg -C "$pkg"
+            fi
+            echo ""
+            printf "${C_DIM}[Press Enter]${C_RESET} "
+            read -r _
+            ;;
+        4)
+            chaldos-pkg -Q
+            echo ""
+            printf "  Remove package: "
+            read -r pkg
+            if [ -n "$pkg" ]; then
+                echo ""
+                chaldos-pkg -R "$pkg"
+            fi
+            echo ""
+            printf "${C_DIM}[Press Enter]${C_RESET} "
+            read -r _
+            ;;
+        5)
+            chaldos-pkg -Q
+            echo ""
+            printf "${C_DIM}[Press Enter]${C_RESET} "
+            read -r _
+            ;;
+        6)
+            chaldos-pkg -Sy
+            echo ""
+            printf "${C_DIM}[Press Enter]${C_RESET} "
+            read -r _
+            ;;
+        7)
+            chaldos-pkg -Su
+            echo ""
+            printf "${C_DIM}[Press Enter]${C_RESET} "
+            read -r _
+            ;;
+        b|B)
+            return
+            ;;
+    esac
+}
+
+# ─── About ────────────────────────────────────────────────────────────
+show_about() {
+    clear
+    echo ""
+    echo "  ${C_CYAN}╔══════════════════════════════════════╗${C_RESET}"
+    echo "  ${C_CYAN}║      ${C_BOLD}About ChaldOS${C_RESET}${C_CYAN}                ║${C_RESET}"
+    echo "  ${C_CYAN}╚══════════════════════════════════════╝${C_RESET}"
+    echo ""
+    echo "  ${C_BOLD}ChaldOS${C_RESET} — Custom Linux distribution"
+    echo "  Version: ${CHALDOS_VERSION}"
+    echo ""
+    echo "  ${C_DIM}Components:${C_RESET}"
+    echo "  • Linux kernel 6.6 LTS"
+    echo "  • BusyBox 1.36 userspace"
+    echo "  • Weston ${C_DIM}(Wayland compositor)${C_RESET}"
+    echo "  • chaldos-pkg ${C_DIM}(package manager)${C_RESET}"
+    echo "  • CDOSUP ${C_DIM}(AUR-like package repo)${C_RESET}"
+    echo ""
+    echo "  ${C_DIM}Repository:${C_RESET}"
+    echo "  github.com/ChaldS-mods"
+    echo ""
+    echo "  ${C_DIM}Wallpapers: Pixel art by ChaldS${C_RESET}"
+    echo ""
+    printf "${C_DIM}[Press Enter]${C_RESET} "
+    read -r _
+}
+
+# ─── Weston Info ──────────────────────────────────────────────────────
+show_weston_info() {
+    clear
+    echo ""
+    echo "  ${C_CYAN}╔══════════════════════════════════════╗${C_RESET}"
+    echo "  ${C_CYAN}║       ${C_BOLD}Display Info${C_RESET}${C_CYAN}                  ║${C_RESET}"
+    echo "  ${C_CYAN}╚══════════════════════════════════════╝${C_RESET}"
+    echo ""
+    if [ "$IN_WAYLAND" = true ]; then
+        echo "  ${C_GREEN}✓${C_RESET} Running under Wayland"
+        echo "  Display: ${WAYLAND_DISPLAY:-wayland-0}"
+        echo "  Backend: DRM ${C_DIM}(hardware-accelerated w/ pixman)${C_RESET}"
+    else
+        echo "  ${C_DIM}Console mode${C_RESET}"
+        echo "  TTY: $(tty 2>/dev/null || echo '?')"
+    fi
+    echo ""
+    echo "  ${C_DIM}GPU support:${C_RESET}"
+    echo "  • Intel — i915 (open source)"
+    echo "  • AMD — amdgpu/radeon (open source)"
+    echo "  • NVIDIA — nouveau (open source)"
+    echo "  • Virtual — virtio-gpu, vmware"
+    echo ""
+    printf "${C_DIM}[Press Enter]${C_RESET} "
+    read -r _
+}
+
+# ─── Main Loop ────────────────────────────────────────────────────────
+while true; do
+    draw_header
+    choice="$(show_menu)"
+
+    case "$choice" in
+        1)
+            # Terminal
+            if [ "$IN_WAYLAND" = true ]; then
+                weston-terminal &
+                exit 0
+            else
+                echo ""
+                echo "  ${C_DIM}Already in terminal. Open another one?${C_RESET}"
+                echo "  (just type commands in your current shell)"
+                echo ""
+                printf "${C_DIM}[Press Enter]${C_RESET} "
+                read -r _
+            fi
+            ;;
+        2)
+            pkg_interface
+            ;;
+        3)
+            show_about
+            ;;
+        4)
+            show_weston_info
+            ;;
+        5)
+            # Reboot
+            draw_header
+            echo "  ${C_YELLOW}Reboot ChaldOS?${C_RESET}"
+            printf "  Confirm (y/N): "
+            read -r confirm
+            case "$confirm" in
+                y|Y|yes) echo ""; echo "  Rebooting..."; sleep 1; reboot ;;
+                *) echo ""; echo "  ${C_DIM}Cancelled.${C_RESET}"; sleep 1 ;;
+            esac
+            ;;
+        6)
+            # Power off
+            draw_header
+            echo "  ${C_YELLOW}Shutdown ChaldOS?${C_RESET}"
+            printf "  Confirm (y/N): "
+            read -r confirm
+            case "$confirm" in
+                y|Y|yes) echo ""; echo "  Shutting down..."; sleep 1; poweroff ;;
+                *) echo ""; echo "  ${C_DIM}Cancelled.${C_RESET}"; sleep 1 ;;
+            esac
+            ;;
+        q|Q)
+            clear
+            exit 0
+            ;;
+    esac
+done

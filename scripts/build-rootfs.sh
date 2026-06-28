@@ -94,6 +94,10 @@ create_directory_structure() {
         "${ROOTFS_DIR}/etc/ssl"
         "${ROOTFS_DIR}/etc/cron"
         "${ROOTFS_DIR}/etc/chaldos"
+        "${ROOTFS_DIR}/etc/cdosup"
+        "${ROOTFS_DIR}/etc/cdosup/installed"
+        "${ROOTFS_DIR}/etc/cdosup/cache"
+        "${ROOTFS_DIR}/etc/cdosup/build"
         "${ROOTFS_DIR}/etc/xdg/weston"
         "${ROOTFS_DIR}/home"
         "${ROOTFS_DIR}/root"
@@ -606,6 +610,8 @@ set_permissions() {
     chmod 0755 "${ROOTFS_DIR}/etc/init.d/network" 2>/dev/null || true
     chmod 0755 "${ROOTFS_DIR}/usr/share/udhcpc/default.script" 2>/dev/null || true
     chmod 0755 "${ROOTFS_DIR}/usr/bin/start-weston" 2>/dev/null || true
+    chmod 0755 "${ROOTFS_DIR}/usr/bin/chaldos-pkg" 2>/dev/null || true
+    chmod 0755 "${ROOTFS_DIR}/usr/bin/chaldos-menu" 2>/dev/null || true
     chmod 0755 "${ROOTFS_DIR}/sbin/init-tty1" 2>/dev/null || true
 
     # Set proper directory permissions
