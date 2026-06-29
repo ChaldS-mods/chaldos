@@ -53,7 +53,9 @@
       "Bash(mkarchiso --version)",
       "Bash(wsl *)",
       "Bash(git remote *)",
-      "Bash(git tag *)"
+      "Bash(git tag *)",
+      "WebSearch",
+      "WebFetch(domain:gitlab.archlinux.org)"
     ]
   }
 }
