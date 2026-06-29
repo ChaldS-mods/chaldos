@@ -52,7 +52,8 @@
       "Read(//c/Users/ttser/Desktop/**)",
       "Bash(mkarchiso --version)",
       "Bash(wsl *)",
-      "Bash(git remote *)"
+      "Bash(git remote *)",
+      "Bash(git tag *)"
     ]
   }
 }
