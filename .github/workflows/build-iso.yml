@@ -62,12 +62,24 @@ jobs:
             pacman-${{ runner.os }}-
             pacman-
 
+      # ─── Debug profiledef ──────────────────────────
+      - name: 🔍 Debug archiso profile
+        run: |
+          echo "=== Profile structure ==="
+          find archlive -type f | sort
+          echo ""
+          echo "=== profiledef.sh ==="
+          cat archlive/profiledef.sh
+          echo ""
+          echo "=== pacman.conf ==="
+          head -20 archlive/pacman.conf
+
       # ─── Setup Arch environment ───────────────────
       - name: 🔧 Setup Arch Linux environment
         run: |
-          # Initialize pacman keyring
-          pacman-key --init
-          pacman-key --populate archlinux
+          # Initialize pacman keyring (needed in fresh container)
+          pacman-key --init 2>&1 | tail -3
+          pacman-key --populate archlinux 2>&1 | tail -3
 
           # Update system and install archiso + deps
           pacman -Syu --noconfirm --needed \
@@ -77,10 +89,10 @@ jobs:
             grub \
             dosfstools \
             mtools \
-            git
+            git 2>&1 | tail -5
 
           echo "✅ Environment ready"
-          mkarchiso --version
+          echo "mkarchiso version: $(mkarchiso --version 2>&1 || echo 'unknown')"
 
       # ─── Prepare airootfs ─────────────────────────
       - name: 📁 Prepare airootfs overlay
