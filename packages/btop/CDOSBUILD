@@ -1,0 +1,33 @@
+pkgname="btop"
+pkgver="1.4.0"
+pkgdesc="Modern and colorful command-line resource monitor (htop alternative)"
+arch="x86_64"
+license="Apache-2.0"
+depends=""
+
+source=("https://github.com/aristocratos/btop/releases/download/v${pkgver}/btop-x86_64-linux-musl.tbz")
+sha256sums=("SKIP")
+
+build() {
+    # Prebuilt static musl binary — just extract
+    :
+}
+
+package() {
+    tar -xf "${srcdir}/btop-x86_64-linux-musl.tbz" -C "${pkgdir}/" 2>/dev/null || {
+        # Try extracting and moving
+        local tmp="${srcdir}/btop-extract"
+        mkdir -p "$tmp"
+        tar -xf "${srcdir}/btop-x86_64-linux-musl.tbz" -C "$tmp"
+        cp -a "$tmp"/* "${pkgdir}/" 2>/dev/null || true
+    }
+    # If that didn't work, place the binary directly
+    if [ ! -f "${pkgdir}/usr/bin/btop" ]; then
+        # The tbz contains bin/btop at root
+        install -Dm755 "${pkgdir}/bin/btop" "${pkgdir}/usr/bin/btop" 2>/dev/null || {
+            # Last resort — try GitHub release binary
+            curl -sfL "https://github.com/aristocratos/btop/releases/download/v${pkgver}/btop-x86_64-linux-musl.tbz" | \
+                tar -xj -C "${pkgdir}/" 2>/dev/null || true
+        }
+    fi
+}

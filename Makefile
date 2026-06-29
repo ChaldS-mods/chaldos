@@ -1,113 +1,57 @@
 # ChaldOS Build System
 # ======================
 # Targets:
-#   all        - Build full ChaldOS ISO
-#   kernel     - Build Linux kernel
-#   busybox    - Build BusyBox
-#   rootfs     - Build root filesystem
-#   initramfs  - Build initramfs
-#   iso        - Create bootable ISO
-#   install    - Install ChaldOS to device
+#   all        - Build full ChaldOS ISO (using mkarchiso)
+#   iso        - Same as all
+#   install    - Run the interactive installer
 #   clean      - Clean build artifacts
-#   distclean  - Full clean (includes downloaded sources)
+#   distclean  - Full clean
+#   help       - Show this help
 
-.PHONY: all kernel busybox rootfs initramfs iso install clean distclean
+.PHONY: all iso install clean distclean help
 
 TOPDIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
-CONFIG := $(TOPDIR)/config
-ROOTFS := $(TOPDIR)/rootfs
-OUTPUT := $(TOPDIR)/output
-BUILD  := $(OUTPUT)/build
-IMAGES := $(OUTPUT)/images
-SOURCES := $(OUTPUT)/sources
-INITRAMFS := $(OUTPUT)/initramfs
-
-# Import build config
-include $(CONFIG)/chaldos.conf
 
 # Default target
 all: iso
 
-# Create output directories
-$(OUTPUT)/%:
-	mkdir -p $(@)
+# Build ChaldOS ISO using mkarchiso
+iso:
+	@echo "==> Building ChaldOS ISO (archiso)..."
+	@$(TOPDIR)/build.sh iso
 
-# Download all sources
-sources: | $(SOURCES)
-	@echo "==> Downloading sources..."
-	@$(TOPDIR)/scripts/download-sources.sh $(SOURCES)
-
-# Build Linux kernel
-kernel: sources | $(BUILD)
-	@echo "==> Building Linux kernel..."
-	@$(TOPDIR)/scripts/build-kernel.sh \
-		--source=$(SOURCES) \
-		--build=$(BUILD) \
-		--config=$(CONFIG)/kernel.config \
-		--output=$(IMAGES)
-
-# Build BusyBox
-busybox: sources | $(BUILD)
-	@echo "==> Building BusyBox..."
-	@$(TOPDIR)/scripts/build-busybox.sh \
-		--source=$(SOURCES) \
-		--build=$(BUILD) \
-		--config=$(CONFIG)/busybox.config \
-		--output=$(ROOTFS)
-
-# Build root filesystem
-rootfs: busybox
-	@echo "==> Assembling root filesystem..."
-	@$(TOPDIR)/scripts/build-rootfs.sh \
-		--rootfs=$(ROOTFS) \
-		--output=$(IMAGES)
-
-# Build initramfs
-initramfs: rootfs
-	@echo "==> Building initramfs..."
-	@$(TOPDIR)/scripts/build-initramfs.sh \
-		--rootfs=$(ROOTFS) \
-		--initramfs=$(INITRAMFS) \
-		--kernel=$(IMAGES) \
-		--output=$(IMAGES)
-
-# Create bootable ISO
-iso: initramfs
-	@echo "==> Creating ChaldOS ISO..."
-	@$(TOPDIR)/scripts/build-iso.sh \
-		--kernel=$(IMAGES) \
-		--initramfs=$(INITRAMFS) \
-		--rootfs=$(ROOTFS) \
-		--bootloader=$(TOPDIR)/bootloader \
-		--config=$(CONFIG) \
-		--output=$(IMAGES)
-
-# Install to device
+# Run the interactive installer (from Arch Live CD)
 install:
-	@echo "==> Installing ChaldOS..."
+	@echo "==> Running ChaldOS Installer..."
 	@$(TOPDIR)/installer/install-chaldos.sh
 
 # Clean build artifacts
 clean:
 	@echo "==> Cleaning build artifacts..."
-	rm -rf $(OUTPUT)
+	@$(TOPDIR)/build.sh clean
 	@echo "    Done."
 
 # Full clean
-distclean: clean
+distclean:
 	@echo "==> Full clean..."
-	rm -rf $(SOURCES)
+	@$(TOPDIR)/build.sh distclean
 	@echo "    Done."
 
 help:
-	@echo "ChaldOS Build System"
-	@echo "===================="
-	@echo "  make all        - Build full ChaldOS ISO"
-	@echo "  make kernel     - Build Linux kernel only"
-	@echo "  make busybox    - Build BusyBox only"
-	@echo "  make rootfs     - Assemble root filesystem"
-	@echo "  make iso        - Create bootable ISO"
-	@echo "  make install    - Install ChaldOS to disk"
+	@echo "ChaldOS Build System — Gaming Edition v2.0"
+	@echo "=========================================="
+	@echo "  make all        - Build full ChaldOS ISO (archiso)"
+	@echo "  make iso        - Same as all"
+	@echo "  make install    - Run interactive installer"
 	@echo "  make clean      - Clean build artifacts"
-	@echo "  make distclean  - Full clean (incl. sources)"
+	@echo "  make distclean  - Full clean"
 	@echo "  make help       - Show this help"
+	@echo ""
+	@echo "ChaldOS базируется на Arch Linux."
+	@echo "ISO строится через mkarchiso (archiso пакет)."
+	@echo ""
+	@echo "Запись на USB:"
+	@echo "  sudo dd if=output/chaldos-YYYYMMDD-x86_64.iso of=/dev/sdX bs=4M status=progress"
+	@echo ""
+	@echo "Установка с Live CD:"
+	@echo "  sudo ./installer/install-chaldos.sh"

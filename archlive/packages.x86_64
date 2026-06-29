@@ -1,0 +1,73 @@
+# ChaldOS Live Environment Packages
+# This is the base set of packages for the live ISO environment.
+# The installer (install-chaldos.sh) handles what goes on the installed system.
+
+# --- Core ---
+base
+base-devel
+linux
+linux-firmware
+linux-headers
+
+# --- Filesystem & storage ---
+btrfs-progs
+dosfstools
+e2fsprogs
+exfatprogs
+f2fs-tools
+ntfs-3g
+xfsprogs
+
+# --- Networking ---
+networkmanager
+dhcpcd
+iwd
+wpa_supplicant
+openssh
+
+# --- Arch installation tools ---
+arch-install-scripts
+pacman-contrib
+
+# --- Bootloader ---
+grub
+efibootmgr
+os-prober
+mtools
+
+# --- System tools ---
+sudo
+bash-completion
+git
+curl
+wget
+vim
+nano
+man-db
+man-pages
+texinfo
+
+# --- Diagnostics and info ---
+lshw
+pciutils
+usbutils
+dmidecode
+hdparm
+smartmontools
+htop
+fastfetch
+
+# --- GPU detection ---
+libva-utils
+vulkan-tools
+vulkan-icd-loader
+
+# --- Shell (user can choose in installer) ---
+zsh
+fish
+
+# --- Locale & time ---
+tzdata
+
+# --- AUR helper dependencies ---
+go

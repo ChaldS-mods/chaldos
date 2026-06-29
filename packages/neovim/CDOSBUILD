@@ -1,0 +1,21 @@
+pkgname="neovim"
+pkgver="0.10.1"
+pkgdesc="Modern Vim fork — extensible text editor with Lua scripting"
+arch="x86_64"
+license="Apache-2.0"
+depends="libuv, msgpack-c, luajit, unibilium, libtermkey, libvterm"
+makedepends="make, gcc, cmake, pkg-config, gettext"
+
+source=("https://github.com/neovim/neovim/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=("SKIP")
+
+build() {
+    make -j$(nproc) CMAKE_BUILD_TYPE=Release CMAKE_INSTALL_PREFIX=/usr
+}
+
+package() {
+    make DESTDIR="${pkgdir}" CMAKE_INSTALL_PREFIX=/usr install
+    strip "${pkgdir}/usr/bin/nvim" 2>/dev/null || true
+    # Remove unused build artifacts
+    rm -rf "${pkgdir}/usr/share/nvim/runtime/doc" 2>/dev/null || true
+}

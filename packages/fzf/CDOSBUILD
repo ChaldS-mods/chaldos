@@ -1,0 +1,17 @@
+pkgname="fzf"
+pkgver="0.56.3"
+pkgdesc="General-purpose command-line fuzzy finder (Go binary)"
+arch="x86_64"
+license="MIT"
+depends=""
+
+source=("https://github.com/junegunn/fzf/releases/download/v${pkgver}/fzf-${pkgver}-linux_amd64.tar.gz")
+sha256sums=("SKIP")
+
+build() {
+    :
+}
+
+package() {
+    install -Dm755 "${srcdir}/fzf" "${pkgdir}/usr/bin/fzf"
+}

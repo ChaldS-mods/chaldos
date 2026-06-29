@@ -1,0 +1,20 @@
+pkgname="tmux"
+pkgver="3.5a"
+pkgdesc="Terminal multiplexer — create, detach, and resume terminal sessions"
+arch="x86_64"
+license="ISC"
+depends="ncurses, libevent"
+makedepends="make, gcc, pkg-config, bison"
+
+source=("https://github.com/tmux/tmux/releases/download/${pkgver}/tmux-${pkgver}.tar.gz")
+sha256sums=("SKIP")
+
+build() {
+    ./configure --prefix=/usr --enable-static=no
+    make -j$(nproc)
+}
+
+package() {
+    make DESTDIR="${pkgdir}" install
+    strip "${pkgdir}/usr/bin/tmux" 2>/dev/null || true
+}

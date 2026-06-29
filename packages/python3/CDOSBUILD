@@ -1,0 +1,31 @@
+pkgname="python3"
+pkgver="3.12.5"
+pkgdesc="High-level dynamic programming language — batteries included"
+arch="x86_64"
+license="PSF"
+depends="zlib, libffi, openssl, ncurses, expat"
+makedepends="make, gcc, pkg-config"
+
+source=("https://www.python.org/ftp/python/${pkgver}/Python-${pkgver}.tar.xz")
+sha256sums=("SKIP")
+
+build() {
+    ./configure --prefix=/usr \
+                --enable-optimizations \
+                --with-system-expat \
+                --with-system-ffi \
+                --enable-shared \
+                --without-ensurepip
+    make -j$(nproc)
+}
+
+package() {
+    make DESTDIR="${pkgdir}" install
+    # Remove static libpython
+    rm -f "${pkgdir}/usr/lib/python3.12/config-"*"/libpython3.12.a"
+    # Fix symlinks
+    ln -sf python3 "${pkgdir}/usr/bin/python"
+    # Strip
+    strip "${pkgdir}/usr/bin/python3.12" 2>/dev/null || true
+    find "${pkgdir}/usr/lib/python3.12/lib-dynload" -name "*.so" -exec strip {} \; 2>/dev/null || true
+}

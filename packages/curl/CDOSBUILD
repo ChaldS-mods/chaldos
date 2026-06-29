@@ -1,0 +1,28 @@
+pkgname="curl"
+pkgver="8.9.1"
+pkgdesc="Command line tool and library for transferring data with URLs"
+arch="x86_64"
+license="curl"
+depends="openssl, zlib"
+makedepends="make, gcc, pkg-config"
+
+source=("https://curl.se/download/curl-${pkgver}.tar.xz")
+sha256sums=("SKIP")
+
+build() {
+    ./configure --prefix=/usr \
+                --disable-static \
+                --with-openssl \
+                --without-ca-bundle \
+                --with-ca-path=/etc/ssl/certs \
+                --enable-ipv6 \
+                --enable-threaded-resolver \
+                --enable-optimize
+    make -j$(nproc)
+}
+
+package() {
+    make DESTDIR="${pkgdir}" install
+    # Remove libtool archive and static lib
+    rm -f "${pkgdir}/usr/lib/"*.la
+}

@@ -1,0 +1,22 @@
+pkgname="jq"
+pkgver="1.7.1"
+pkgdesc="Lightweight and flexible command-line JSON processor — single binary"
+arch="x86_64"
+license="MIT"
+depends=""
+
+source=("https://github.com/jqlang/jq/releases/download/jq-${pkgver}/jq-linux-amd64")
+sha256sums=("SKIP")
+
+build() {
+    # jq distributes prebuilt binaries for Linux amd64
+    :
+}
+
+package() {
+    install -Dm755 "${srcdir}/jq-linux-amd64" "${pkgdir}/usr/bin/jq"
+    install -Dm644 /dev/stdin "${pkgdir}/usr/share/doc/jq/README" << 'EOF'
+jq — command-line JSON processor
+https://jqlang.github.io/jq/
+EOF
+}

@@ -1,0 +1,18 @@
+pkgname="tree"
+pkgver="2.1.3"
+pkgdesc="Recursive directory listing tool — displays directory tree"
+arch="x86_64"
+license="GPL-2.0"
+depends=""
+
+source=("https://github.com/Old-Man-Programmer/tree/archive/refs/tags/${pkgver}.tar.gz")
+sha256sums=("SKIP")
+
+build() {
+    make -j$(nproc) all
+}
+
+package() {
+    install -Dm755 tree "${pkgdir}/usr/bin/tree"
+    install -Dm644 doc/tree.1 "${pkgdir}/usr/share/man/man1/tree.1"
+}

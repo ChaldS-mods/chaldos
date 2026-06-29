@@ -1,0 +1,201 @@
+# ChaldOS ISO Builder — GitHub Actions
+# =======================================
+# Builds a bootable ChaldOS ISO using archiso.
+# Runs on a container with Arch Linux for native mkarchiso support.
+#
+# Trigger:
+#   - Push a tag like v2.0.0 → builds + publishes release
+#   - Manual dispatch from GitHub UI → builds artifact only
+#   - Push to main → builds artifact only
+
+name: 🎮 Build ChaldOS ISO
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Версия (например, 2.0.0)'
+        required: false
+        default: '2.0.0'
+      upload_artifact:
+        description: 'Загрузить артефакт'
+        type: boolean
+        default: true
+
+  push:
+    tags:
+      - 'v*'
+
+  pull_request:
+    branches: [main]
+
+# Prevent concurrent builds of the same ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CHALDOS_VERSION: "2.0.0"
+  OUTPUT_DIR: "/build/output"
+
+jobs:
+  build:
+    name: 🔨 Build ISO
+    runs-on: ubuntu-latest
+    # Run inside Arch Linux container for native mkarchiso
+    container:
+      image: archlinux:latest
+      options: --privileged  # needed for mount operations in mkarchiso
+
+    steps:
+      # ─── Checkout ─────────────────────────────────
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # ─── Pacman cache ─────────────────────────────
+      - name: 💾 Cache pacman packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/pacman/pkg
+          key: pacman-${{ runner.os }}-${{ hashFiles('archlive/packages.x86_64') }}
+          restore-keys: |
+            pacman-${{ runner.os }}-
+            pacman-
+
+      # ─── Setup Arch environment ───────────────────
+      - name: 🔧 Setup Arch Linux environment
+        run: |
+          # Initialize pacman keyring
+          pacman-key --init
+          pacman-key --populate archlinux
+
+          # Update system and install archiso + deps
+          pacman -Syu --noconfirm --needed \
+            archiso \
+            squashfs-tools \
+            libisoburn \
+            grub \
+            dosfstools \
+            mtools \
+            git
+
+          echo "✅ Environment ready"
+          mkarchiso --version
+
+      # ─── Prepare airootfs ─────────────────────────
+      - name: 📁 Prepare airootfs overlay
+        run: |
+          bash archlive/prepare-airootfs.sh
+          echo "📂 airootfs contents:"
+          find archlive/airootfs -type f | sort
+
+      # ─── Build ISO ────────────────────────────────
+      - name: 🏗️ Build ChaldOS ISO
+        id: build
+        run: |
+          mkdir -p "${{ env.OUTPUT_DIR }}"
+
+          # Run mkarchiso
+          mkarchiso -v -w /build/work -o "${{ env.OUTPUT_DIR }}" archlive/
+
+          echo "📀 Build output:"
+          find "${{ env.OUTPUT_DIR }}" -name "*.iso" -type f
+
+      # ─── List ISO ─────────────────────────────────
+      - name: 📋 List generated ISO
+        run: |
+          echo "=== Generated ISO files ==="
+          ls -lh "${{ env.OUTPUT_DIR }}"/
+
+          # Find the ISO and set it as output
+          ISO_PATH=$(find "${{ env.OUTPUT_DIR }}" -name "*.iso" -type f | head -1)
+          echo "iso_path=$ISO_PATH" >> $GITHUB_OUTPUT
+          echo "iso_name=$(basename $ISO_PATH)" >> $GITHUB_OUTPUT
+          echo "iso_size=$(du -h "$ISO_PATH" | cut -f1)" >> $GITHUB_OUTPUT
+          echo "iso_sha256=$(sha256sum "$ISO_PATH" | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+        id: iso-info
+
+      # ─── Upload artifact ──────────────────────────
+      - name: 📦 Upload ISO as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chaldos-iso-${{ github.sha }}
+          path: ${{ env.OUTPUT_DIR }}/*.iso
+          compression-level: 0  # ISO already compressed
+          retention-days: 30
+
+      # ─── Publish Release ──────────────────────────
+      - name: 🚀 Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ChaldOS ${{ github.ref_name }}
+          body: |
+            ## 🎮 ChaldOS ${{ github.ref_name }} Gaming Edition
+
+            Скачивай ISO и начинай играть!
+
+            ```
+            ╔═══════════════╗
+            ║  ◉      ◉    ║
+            ║     ❤       ║
+            ║    ╱──╲     ║
+            ╚═══════════════╝
+            ```
+
+            ### 📦 ISO информация
+            - **Размер:** ${{ steps.iso-info.outputs.iso_size }}
+            - **SHA256:** `${{ steps.iso-info.outputs.iso_sha256 }}`
+
+            ### 🚀 Установка
+            ```
+            sudo dd if=${{ steps.iso-info.outputs.iso_name }} of=/dev/sdX bs=4M status=progress
+            ```
+
+            ### 📝 Что нового
+            - Основа: Arch Linux 🐧
+            - 9 рабочих столов на выбор 🖥️
+            - 10 GPU драйверов 🎮
+            - 14+ игровых пакетов 📦
+            - DaVinci Resolve 🎬
+            - Маскот Чалдо 🤖
+          files: |
+            ${{ env.OUTPUT_DIR }}/*.iso
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─── Verification job (optional) ─────────────────
+  verify:
+    name: ✅ Verify ISO structure
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
+
+    steps:
+      - name: 📥 Download ISO artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: chaldos-iso-${{ github.sha }}
+          path: /tmp/iso
+
+      - name: 🔍 Verify ISO structure
+        run: |
+          ISO=$(find /tmp/iso -name "*.iso" | head -1)
+          echo "Verifying: $ISO"
+
+          # Check size
+          SIZE=$(du -h "$ISO" | cut -f1)
+          echo "Size: $SIZE"
+
+          # Check file type
+          file "$ISO"
+
+          # Check ISO structure with xorriso
+          xorriso -indev "$ISO" -report_el_torito 2>&1 | head -20
+
+          # SHA256
+          sha256sum "$ISO"
+
+          echo "✅ ISO verification passed!"

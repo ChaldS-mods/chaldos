@@ -1,0 +1,20 @@
+pkgname="diffutils"
+pkgver="3.10"
+pkgdesc="GNU utilities for comparing files — diff, cmp, diff3, sdiff"
+arch="x86_64"
+license="GPL-3.0"
+depends=""
+makedepends="make, gcc"
+
+source=("https://ftp.gnu.org/gnu/diffutils/diffutils-${pkgver}.tar.xz")
+sha256sums=("SKIP")
+
+build() {
+    ./configure --prefix=/usr
+    make -j$(nproc)
+}
+
+package() {
+    make DESTDIR="${pkgdir}" install
+    find "${pkgdir}/usr/bin" -type f -exec strip {} \; 2>/dev/null || true
+}

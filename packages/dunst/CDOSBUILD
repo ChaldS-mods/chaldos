@@ -1,0 +1,22 @@
+pkgname="dunst"
+pkgver="1.12.0"
+pkgdesc="Lightweight and customizable notification daemon (Wayland/X11)"
+arch="x86_64"
+license="BSD-3-Clause"
+depends="dbus, libx11, libxft, libxinerama, libxrandr, libxscrnsaver"
+makedepends="make, gcc, pkg-config"
+
+source=("https://github.com/dunst-project/dunst/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=("SKIP")
+
+build() {
+    make -j$(nproc) PREFIX=/usr SYSCONF=/etc
+}
+
+package() {
+    make DESTDIR="${pkgdir}" PREFIX=/usr SYSCONF=/etc install
+    strip "${pkgdir}/usr/bin/dunst" 2>/dev/null || true
+    install -d "${pkgdir}/etc/dunst"
+    install -m644 "${srcdir}/dunst-${pkgver}/dunstrc" "${pkgdir}/etc/dunst/dunstrc" 2>/dev/null || \
+    install -m644 "${srcdir}//dunstrc" "${pkgdir}/etc/dunst/dunstrc" 2>/dev/null || true
+}

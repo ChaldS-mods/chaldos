@@ -39,6 +39,14 @@ CDOSUP_REPO="https://raw.githubusercontent.com/ChaldS-mods/cdosup/main"
 CDOSUP_API="https://api.github.com/repos/ChaldS-mods/cdosup"
 BINARY_REPO="https://github.com/ChaldS-mods/cdosup/releases/latest/download"
 
+# Detect system architecture
+ARCH="$(uname -m 2>/dev/null || echo "x86_64")"
+case "$ARCH" in
+    i686|i586|i486|i386) ARCH="i686" ;;
+    x86_64|amd64)        ARCH="x86_64" ;;
+    *)                   ARCH="x86_64" ;;
+esac
+
 # Source config file if it exists
 if [ -f "$CONF_FILE" ]; then
     . "$CONF_FILE" 2>/dev/null || true
@@ -267,7 +275,7 @@ pkg_install_binary() {
     # Download binary package
     local cache_file="${CACHE_DIR}/${pkgname}-${pkgver}.cdos"
     if [ ! -f "$cache_file" ]; then
-        local pkg_url="${BINARY_REPO}/${pkgname}-${pkgver}-x86_64.cdos"
+        local pkg_url="${BINARY_REPO}/${pkgname}-${pkgver}-${ARCH}.cdos"
         info "Downloading ${pkgname} ${pkgver}..."
         if has_cmd curl; then
             curl -fL "$pkg_url" -o "$cache_file" 2>/dev/null || die "Download failed: $pkg_url"
@@ -394,7 +402,7 @@ cdosup_build() {
 pkgname = ${pkgname}
 pkgver = ${pkgver}
 pkgdesc = ${pkgdesc:-}
-arch = ${arch:-x86_64}
+arch = ${arch:-${ARCH}}
 license = ${license:-custom}
 depends = ${depends:-}
 EOF

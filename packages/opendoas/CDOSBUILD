@@ -1,0 +1,31 @@
+pkgname="opendoas"
+pkgver="6.3p12"
+pkgdesc="Minimal sudo replacement — OpenBSD doas port"
+arch="x86_64"
+license="ISC"
+depends=""
+makedepends="make, gcc, bison, flex"
+
+source=("https://github.com/Duncaen/opendoas/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=("SKIP")
+
+build() {
+    ./configure --prefix=/usr --sysconfdir=/etc --without-pam
+    make -j$(nproc)
+}
+
+package() {
+    make DESTDIR="${pkgdir}" install
+    install -d "${pkgdir}/etc"
+    cat > "${pkgdir}/etc/doas.conf" << 'EOF'
+# doas configuration file
+# See doas.conf(5) for details
+
+# Allow root to do anything
+permit nopass keepenv :root
+
+# Allow users in wheel group to run commands
+permit keepenv :wheel
+EOF
+    chmod 0400 "${pkgdir}/etc/doas.conf"
+}

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChaldOS — Gaming Edition 🎮</title>
+  <meta name="description" content="ChaldOS Gaming Edition — геймерская операционная система на базе Arch Linux. Скачать ISO, установка, возможности.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%236c3483'/%3E%3Ctext x='16' y='22' font-size='18' text-anchor='middle' fill='white'%3EC%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+  <!-- ─── Particle Canvas ─── -->
+  <canvas id="particles"></canvas>
+
+  <!-- ─── Navigation ─── -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo">
+        <span class="logo-mascot">◉◉</span>
+        <span class="logo-text">ChaldOS</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Возможности</a></li>
+        <li><a href="#download">Скачать</a></li>
+        <li><a href="#desktops">Рабочие столы</a></li>
+        <li><a href="#gaming">Игры</a></li>
+        <li><a href="#install">Установка</a></li>
+      </ul>
+      <button class="nav-toggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ─── Hero ─── -->
+  <section class="hero" id="home">
+    <div class="hero-bg-glow"></div>
+    <div class="hero-content">
+      <div class="mascot">
+        <pre class="mascot-art">
+<span class="c-hat">╔═══════════════╗</span>
+<span class="c-hat">║</span>  <span class="c-eyes">◉</span>      <span class="c-eyes">◉</span>    <span class="c-hat">║</span>
+<span class="c-hat">║</span>     <span class="c-mouth">❤</span>       <span class="c-hat">║</span>
+<span class="c-hat">║</span>    <span class="c-face">╱──╲</span>     <span class="c-hat">║</span>
+<span class="c-hat">╚═══════════════╝</span></pre>
+      </div>
+      <h1 class="hero-title">
+        <span class="title-line">C H A L D O S</span>
+        <span class="title-sub">Gaming Edition v2.0</span>
+      </h1>
+      <p class="hero-desc">
+        Геймерская операционная система на базе <strong>Arch Linux</strong>.<br>
+        Максимальная производительность. Стиль. Свобода. 🎮
+      </p>
+      <div class="hero-buttons">
+        <a href="#download" class="btn btn-primary">
+          <span class="btn-icon">📥</span>
+          Скачать ISO
+        </a>
+        <a href="#install" class="btn btn-secondary">
+          <span class="btn-icon">📖</span>
+          Инструкция
+        </a>
+        <a href="https://github.com/chaldos/chaldos" target="_blank" class="btn btn-ghost">
+          <span class="btn-icon">🐙</span>
+          GitHub
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-num">10</span>
+          <span class="stat-label">Рабочих столов</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">10</span>
+          <span class="stat-label">GPU драйверов</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">14+</span>
+          <span class="stat-label">Игровых пакетов</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">Arch</span>
+          <span class="stat-label">Основа</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Features ─── -->
+  <section class="section" id="features">
+    <div class="container">
+      <h2 class="section-title">🚀 Возможности</h2>
+      <p class="section-desc">Всё, что нужно геймеру, стримеру и создателю контента</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎮</div>
+          <h3>Игровой софт</h3>
+          <p>Steam, Lutris, Heroic, OBS, MangoHud, Wine, Proton GE, Gamescope, GameMode и Discord — всё предустановлено.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🖥️</div>
+          <h3>Любой рабочий стол</h3>
+          <p>KDE Plasma 6, GNOME, XFCE, Hyprland, Sway, Budgie, Cinnamon, MATE, i3 — выбирай под свой стиль.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎬</div>
+          <h3>DaVinci Resolve</h3>
+          <p>Профессиональный видеоредактор с автоматической установкой через AUR или ручной .zip с сайта Blackmagic.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🖌️</div>
+          <h3>Vulkan & GPU</h3>
+          <p>Поддержка NVIDIA (nvidia, nvidia-open, DKMS), AMD (amdgpu), Intel и VM/VirtIO — все драйверы в установщике.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📦</div>
+          <h3>AUR + pacman</h3>
+          <p>Доступ к Arch User Repository через paru. Тысячи пакетов из коробки.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>Маскот Чалдо</h3>
+          <p>ASCII-персонаж, который помогает в установке, показывает эмоции и поднимает настроение. Просто введи <code>chaldos-mascot</code>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Download ─── -->
+  <section class="section section-dark" id="download">
+    <div class="container">
+      <h2 class="section-title">📥 Скачать ChaldOS</h2>
+      <p class="section-desc">Выбери способ установки</p>
+
+      <div class="download-cards">
+        <div class="download-card featured">
+          <div class="download-badge">🔥 Рекомендуем</div>
+          <div class="download-iso-icon">💿</div>
+          <h3>ChaldOS ISO</h3>
+          <div class="download-version">v2.0.0 Gaming Edition</div>
+          <div class="download-info">
+            <span>🏷️ Arch Linux x86_64</span>
+            <span>📏 ~2.5 GB</span>
+            <span>🔑 UEFI + BIOS</span>
+          </div>
+          <a href="#" class="btn btn-primary btn-large btn-download" data-version="2.0.0">
+            <span class="btn-icon">📥</span>
+            Скачать ISO
+          </a>
+          <p class="download-note">SHA256: <code id="sha256-hash">проверка...</code></p>
+        </div>
+
+        <div class="download-card">
+          <div class="download-iso-icon">🛠️</div>
+          <h3>Собрать самому</h3>
+          <div class="download-version">Из исходников</div>
+          <div class="code-block">
+            <pre><code>git clone https://github.com/chaldos/chaldos.git
+cd chaldos
+sudo pacman -S archiso
+./build.sh</code></pre>
+          </div>
+          <a href="https://github.com/chaldos/chaldos" target="_blank" class="btn btn-secondary btn-large">
+            <span class="btn-icon">🐙</span>
+            GitHub
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Desktop Environments ─── -->
+  <section class="section" id="desktops">
+    <div class="container">
+      <h2 class="section-title">🖥️ Рабочие столы</h2>
+      <p class="section-desc">Выбери окружение под свои задачи и железо</p>
+      <div class="de-grid">
+        <div class="de-card" style="--accent:#8e44ad">
+          <span class="de-icon">🎮</span>
+          <h3>KDE Plasma 6</h3>
+          <p>Современный, красивый, идеален для игр</p>
+          <span class="de-tag recommended">⭐ Рекомендуется</span>
+        </div>
+        <div class="de-card" style="--accent:#2e86c1">
+          <span class="de-icon">🖥️</span>
+          <h3>GNOME</h3>
+          <p>Интуитивный, минималистичный</p>
+          <span class="de-tag">Wayland</span>
+        </div>
+        <div class="de-card" style="--accent:#27ae60">
+          <span class="de-icon">⚡</span>
+          <h3>XFCE</h3>
+          <p>Лёгкий, быстрый, для старого железа</p>
+          <span class="de-tag">Lightweight</span>
+        </div>
+        <div class="de-card" style="--accent:#00d2ff">
+          <span class="de-icon">✨</span>
+          <h3>Hyprland</h3>
+          <p>Стильный Wayland композитор</p>
+          <span class="de-tag">Wayland</span>
+        </div>
+        <div class="de-card" style="--accent:#f39c12">
+          <span class="de-icon">🪟</span>
+          <h3>Sway</h3>
+          <p>i3-подобный тайловый WM</p>
+          <span class="de-tag">Wayland</span>
+        </div>
+        <div class="de-card" style="--accent:#e74c3c">
+          <span class="de-icon">🌿</span>
+          <h3>Budgie</h3>
+          <p>Элегантный и простой</p>
+          <span class="de-tag">Xorg</span>
+        </div>
+        <div class="de-card" style="--accent:#d35400">
+          <span class="de-icon">🍭</span>
+          <h3>Cinnamon</h3>
+          <p>Классический, как Windows</p>
+          <span class="de-tag">Xorg</span>
+        </div>
+        <div class="de-card" style="--accent:#1abc9c">
+          <span class="de-icon">🍃</span>
+          <h3>MATE</h3>
+          <p>Лёгкий, традиционный</p>
+          <span class="de-tag">Xorg</span>
+        </div>
+        <div class="de-card" style="--accent:#7f8c8d">
+          <span class="de-icon">🔲</span>
+          <h3>i3 WM</h3>
+          <p>Минималистичный тайловый</p>
+          <span class="de-tag">Xorg</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Gaming ─── -->
+  <section class="section section-dark" id="gaming">
+    <div class="container">
+      <h2 class="section-title">🎮 Игровой софт</h2>
+      <p class="section-desc">Всё для игр, стриминга и творчества — одной командой в установщике</p>
+      <div class="gaming-grid">
+        <div class="gaming-item"><span class="gi-icon">🎮</span><span class="gi-name">Steam</span><span class="gi-desc">Главный игровой магазин</span></div>
+        <div class="gaming-item"><span class="gi-icon">🐧</span><span class="gi-name">Lutris</span><span class="gi-desc">Открытая игровая платформа</span></div>
+        <div class="gaming-item"><span class="gi-icon">🎯</span><span class="gi-name">Heroic Games Launcher</span><span class="gi-desc">Epic Games + GOG</span></div>
+        <div class="gaming-item"><span class="gi-icon">📺</span><span class="gi-name">OBS Studio</span><span class="gi-desc">Запись и стриминг</span></div>
+        <div class="gaming-item"><span class="gi-icon">📊</span><span class="gi-name">MangoHud + GOverlay</span><span class="gi-desc">FPS мониторинг</span></div>
+        <div class="gaming-item"><span class="gi-icon">🍷</span><span class="gi-name">Wine + Wine-Staging</span><span class="gi-desc">Windows игры на Linux</span></div>
+        <div class="gaming-item"><span class="gi-icon">🔧</span><span class="gi-name">Proton GE</span><span class="gi-desc">Кастомный Proton</span></div>
+        <div class="gaming-item"><span class="gi-icon">🖥️</span><span class="gi-name">Gamescope</span><span class="gi-desc">Микро-композитор для игр</span></div>
+        <div class="gaming-item"><span class="gi-icon">⚡</span><span class="gi-name">GameMode</span><span class="gi-desc">Оптимизация системы</span></div>
+        <div class="gaming-item"><span class="gi-icon">💬</span><span class="gi-name">Discord</span><span class="gi-desc">Голосовой чат</span></div>
+        <div class="gaming-item"><span class="gi-icon">🧊</span><span class="gi-name">Prism Launcher</span><span class="gi-desc">Майнкрафт</span></div>
+        <div class="gaming-item"><span class="gi-icon">🖌️</span><span class="gi-name">Vulkan Tools</span><span class="gi-desc">Современная графика</span></div>
+      </div>
+      <div style="text-align:center;margin-top:2rem;">
+        <a href="#download" class="btn btn-primary btn-large">
+          <span class="btn-icon">📥</span>
+          Начать играть
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── GPU ─── -->
+  <section class="section" id="gpu">
+    <div class="container">
+      <h2 class="section-title">🎮 Поддержка GPU</h2>
+      <p class="section-desc">Установщик сам подберёт и установит нужные драйверы</p>
+      <div class="gpu-table-wrapper">
+        <table class="gpu-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Видеокарта</th>
+              <th>Драйвер</th>
+              <th>Описание</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><span class="gpu-icon">🔵</span> NVIDIA</td><td class="gpu-driver">nvidia</td><td>⭐ Проприетарный драйвер</td></tr>
+            <tr><td>2</td><td><span class="gpu-icon">🔵</span> NVIDIA</td><td class="gpu-driver">nvidia-open</td><td>🔓 Открытый модуль (RTX 2xxx+)</td></tr>
+            <tr><td>3</td><td><span class="gpu-icon">🔵</span> NVIDIA</td><td class="gpu-driver">nvidia-dkms</td><td>🔧 DKMS версия</td></tr>
+            <tr><td>4</td><td><span class="gpu-icon">🔵</span> NVIDIA</td><td class="gpu-driver">nvidia-lts</td><td>🛡️ LTS версия</td></tr>
+            <tr><td>5</td><td><span class="gpu-icon">🔵</span> NVIDIA</td><td class="gpu-driver">nouveau</td><td>🐧 Свободный драйвер</td></tr>
+            <tr class="row-recommended"><td>6</td><td><span class="gpu-icon">🔴</span> AMD</td><td class="gpu-driver">amdgpu/mesa</td><td>⭐ Отличная поддержка!</td></tr>
+            <tr><td>7</td><td><span class="gpu-icon">🔴</span> AMD</td><td class="gpu-driver">amd-pro</td><td>💼 Рабочие станции (AUR)</td></tr>
+            <tr><td>8</td><td><span class="gpu-icon">🔵</span> Intel</td><td class="gpu-driver">i915/mesa</td><td>⭐ Встроенная графика</td></tr>
+            <tr><td>9</td><td><span class="gpu-icon">🔵</span> Intel</td><td class="gpu-driver">intel-compute</td><td>🔬 Вычислительные задачи</td></tr>
+            <tr><td>10</td><td><span class="gpu-icon">🟢</span> VM/Virt</td><td class="gpu-driver">virtio/vmware</td><td>🖥️ Виртуальные машины</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Install Guide ─── -->
+  <section class="section section-dark" id="install">
+    <div class="container">
+      <h2 class="section-title">📖 Установка</h2>
+      <p class="section-desc">Установи ChaldOS за несколько простых шагов</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h3>📥 Скачай ISO</h3>
+            <p>Скачай ChaldOS ISO с этого сайта или собери сам через <code>./build.sh</code>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h3>💿 Запиши на USB</h3>
+            <p>
+              <code>sudo dd if=chaldos-*.iso of=/dev/sdX bs=4M status=progress</code>
+              <br>или используй Rufus / Ventoy / balenaEtcher.
+            </p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h3>🖥️ Загрузись с USB</h3>
+            <p>Перезагрузи компьютер и выбери загрузку с USB-флешки (F12, F2, Del — зависит от производителя).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h3>🚀 Запусти установщик</h3>
+            <p>В live-среде просто введи: <code>sudo chaldos-install</code></p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h3>⚙️ Выбери настройки</h3>
+            <p>Рабочий стол, GPU драйверы, игровой софт, DaVinci Resolve — установщик проведёт тебя через все шаги.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <div class="step-content">
+            <h3>🎮 Играй!</h3>
+            <p>После установки перезагрузи компьютер и наслаждайся ChaldOS! Введи <code>chaldos-mascot</code> для приветствия.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Requirements ─── -->
+  <section class="section" id="requirements">
+    <div class="container">
+      <h2 class="section-title">📋 Системные требования</h2>
+      <div class="req-grid">
+        <div class="req-card">
+          <span class="req-icon">💻</span>
+          <h3>Процессор</h3>
+          <p>x86_64 (Intel Core 2 / AMD K8 или новее)</p>
+        </div>
+        <div class="req-card">
+          <span class="req-icon">🧠</span>
+          <h3>Оперативная память</h3>
+          <p>2 ГБ минимум<br><strong>8+ ГБ для игр</strong></p>
+        </div>
+        <div class="req-card">
+          <span class="req-icon">💾</span>
+          <h3>Диск</h3>
+          <p>20 ГБ минимум<br><strong>50+ ГБ для игр</strong></p>
+        </div>
+        <div class="req-card">
+          <span class="req-icon">🔌</span>
+          <h3>Загрузка</h3>
+          <p>UEFI (рекомендуется) или BIOS</p>
+        </div>
+        <div class="req-card">
+          <span class="req-icon">🌐</span>
+          <h3>Интернет</h3>
+          <p>Требуется для установки</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Footer ─── -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <pre class="footer-mascot">
+╔═══════════════╗
+║  ◉      ◉    ║
+║     ❤       ║
+║    ╱──╲     ║
+╚═══════════════╝
+<span class="footer-brand-name">C H A L D O S</span>
+          </pre>
+          <p>Геймерская ОС на базе Arch Linux.<br>Сделано с ❤ для геймеров.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Навигация</h4>
+          <ul>
+            <li><a href="#features">Возможности</a></li>
+            <li><a href="#download">Скачать</a></li>
+            <li><a href="#desktops">Рабочие столы</a></li>
+            <li><a href="#gaming">Игры</a></li>
+            <li><a href="#install">Установка</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Ресурсы</h4>
+          <ul>
+            <li><a href="https://archlinux.org" target="_blank">Arch Linux</a></li>
+            <li><a href="https://wiki.archlinux.org" target="_blank">Arch Wiki</a></li>
+            <li><a href="https://github.com/chaldos/chaldos" target="_blank">GitHub</a></li>
+            <li><a href="https://aur.archlinux.org" target="_blank">AUR</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Благодарности</h4>
+          <ul>
+            <li>Arch Linux — надёжная основа</li>
+            <li>Valve — Steam, Proton, Gamescope</li>
+            <li>Blackmagic Design — DaVinci Resolve</li>
+            <li>Всем геймерам на Linux! 🎮</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2026 ChaldOS Project. Open source. GNU GPL.</p>
+        <p class="footer-tagline">🎮 Играй на ChaldOS!</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+pkgname="git"
+pkgver="2.46.0"
+pkgdesc="Fast, scalable, distributed revision control system"
+arch="x86_64"
+license="GPL-2.0"
+depends="openssl, zlib, curl"
+makedepends="make, gcc, perl"
+
+source=("https://www.kernel.org/pub/software/scm/git/git-${pkgver}.tar.xz")
+sha256sums=("SKIP")
+
+build() {
+    ./configure --prefix=/usr \
+                --with-openssl \
+                --with-curl \
+                --without-tcltk \
+                --without-python \
+                --with-zlib
+    make -j$(nproc)
+}
+
+package() {
+    make DESTDIR="${pkgdir}" install
+    # Strip binaries
+    find "${pkgdir}/usr/libexec/git-core" -type f -exec strip {} \; 2>/dev/null || true
+    strip "${pkgdir}/usr/bin/git" 2>/dev/null || true
+}

@@ -1,0 +1,49 @@
+# ChaldOS GRUB Theme
+title-text: "ChaldOS Gaming Edition v2.0"
+title-font: "DejaVu Sans Bold 20"
+title-color: "#FF6EB4"
+title-align: "center"
+
+desktop-image: ""
+desktop-color: "#1a1a2e"
+terminal-box: "terminal_box_*.png"
+terminal-left: "0"
+terminal-top: "0"
+terminal-width: "100%"
+terminal-height: "100%"
+
++ boot_menu {
+    left = 25%
+    top = 20%
+    width = 50%
+    height = 60%
+    item_color = "#ccccc0"
+    selected_item_color = "#FF6EB4"
+    item_height = 32
+    item_padding = 8
+    item_spacing = 4
+    item_font = "DejaVu Sans Regular 14"
+    selected_item_font = "DejaVu Sans Bold 16"
+    selected_item_pixmap_style = "select_*.png"
+    scrollbar = true
+    scrollbar_width = 12
+    scrollbar_thumb = "scrollbar_thumb_*.png"
+}
+
++ progress_bar {
+    id = "__timeout__"
+    fg_color = "#FF6EB4"
+    bg_color = "#333355"
+    width = 50%
+    height = 20
+    left = 25%
+    top = 85%
+}
+
++ image {
+    left = 5%
+    top = 5%
+    width = 5%
+    height = 10%
+    file = "chaldos_logo.png"
+}

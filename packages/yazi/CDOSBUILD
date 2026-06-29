@@ -1,0 +1,22 @@
+pkgname="yazi"
+pkgver="0.3.3"
+pkgdesc="Blazing-fast terminal file manager written in Rust (single binary)"
+arch="x86_64"
+license="MIT"
+depends=""
+
+source=("https://github.com/sxyazi/yazi/releases/download/v${pkgver}/yazi-x86_64-unknown-linux-gnu.zip")
+sha256sums=("SKIP")
+
+build() {
+    :
+}
+
+package() {
+    # Prebuilt binary in zip
+    unzip -o "${srcdir}/yazi-x86_64-unknown-linux-gnu.zip" -d "${srcdir}/yazi-extract" 2>/dev/null || true
+    find "${srcdir}" -type f -name "yazi" -exec install -Dm755 {} "${pkgdir}/usr/bin/yazi" \; 2>/dev/null || true
+    if [ ! -f "${pkgdir}/usr/bin/yazi" ]; then
+        install -Dm755 "${srcdir}/yazi-extract/yazi" "${pkgdir}/usr/bin/yazi" 2>/dev/null || true
+    fi
+}

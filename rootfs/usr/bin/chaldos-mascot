@@ -1,0 +1,141 @@
+#!/bin/bash
+# ChaldOS Mascot — "Чалдо" (Chaldo)
+# =====================================
+# Запуск: chaldos-mascot [эмоция] [сообщение]
+#
+# Эмоции: happy, think, work, love, dance, warn, sleep, cool, big
+#
+# Примеры:
+#   chaldos-mascot                    # Приветствие
+#   chaldos-mascot happy "Привет!"    # Сказать с эмоцией
+#   chaldos-mascot dance "Ура!"       # Потанцевать
+
+C_RESET='\033[0m'
+C_HAT='\033[1;35m'
+C_FACE='\033[1;33m'
+C_BUBBLE='\033[1;34m'
+C_TEXT='\033[1;37m'
+C_RED='\033[0;31m'
+C_GREEN='\033[0;32m'
+
+show_mascot() {
+    local emotion="${1:-happy}"
+
+    echo ""
+    case "$emotion" in
+        happy)
+            echo -e "${C_HAT}    ╔═══════════════╗${C_RESET}"
+            echo -e "${C_HAT}    ║  ${C_FACE}◉      ◉${C_HAT}    ║${C_RESET}"
+            echo -e "${C_HAT}    ║     ${C_RED}❤${C_HAT}       ║${C_RESET}"
+            echo -e "${C_HAT}    ║    ${C_FACE}╱──╲${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ╚═══════════════╝${C_RESET}"
+            ;;
+        think)
+            echo -e "${C_HAT}    ╔═══════════════╗${C_RESET}"
+            echo -e "${C_HAT}    ║  ${C_FACE}◉      ◉${C_HAT}    ║${C_RESET}"
+            echo -e "${C_HAT}    ║     ${C_TEXT}•?•${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ║    ${C_FACE}╭──╮${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ╚═══════════════╝${C_RESET}"
+            ;;
+        work)
+            echo -e "${C_HAT}    ╔═══════════════╗${C_RESET}"
+            echo -e "${C_HAT}    ║  ${C_FACE}◉      ◉${C_HAT}    ║${C_RESET}"
+            echo -e "${C_HAT}    ║     ${C_TEXT}▄▄▄${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ║    ${C_FACE}╧──╧${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ╚═══════════════╝${C_RESET}"
+            ;;
+        love)
+            echo -e "${C_HAT}    ╔═══════════════╗${C_RESET}"
+            echo -e "${C_HAT}    ║  ${C_FACE}◉      ◉${C_HAT}    ║${C_RESET}"
+            echo -e "${C_HAT}    ║  ${C_RED}♥  ♥  ♥${C_HAT}    ║${C_RESET}"
+            echo -e "${C_HAT}    ║    ${C_FACE}╰──╯${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ╚═══════════════╝${C_RESET}"
+            ;;
+        dance)
+            echo -e "${C_HAT}    ╔═══════════════╗${C_RESET}"
+            echo -e "${C_HAT}    ║  ${C_FACE}◉      ◉${C_HAT}    ║${C_RESET}"
+            echo -e "${C_HAT}    ║    ${C_TEXT}★ ★${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ║ ${C_TEXT}♪${C_FACE}╲──╱${C_TEXT}♪${C_HAT}   ║${C_RESET}"
+            echo -e "${C_HAT}    ╚═══════════════╝${C_RESET}"
+            ;;
+        warn)
+            echo -e "${C_HAT}    ╔═══════════════╗${C_RESET}"
+            echo -e "${C_HAT}    ║  ${C_RED}⊙      ⊙${C_HAT}    ║${C_RESET}"
+            echo -e "${C_HAT}    ║    ${C_RED}█▬█${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ║    ${C_RED}╰──╯${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ╚═══════════════╝${C_RESET}"
+            ;;
+        cool)
+            echo -e "${C_HAT}    ╔═══════════════╗${C_RESET}"
+            echo -e "${C_HAT}    ║  ${C_FACE}‾◉    ◉‾${C_HAT}   ║${C_RESET}"
+            echo -e "${C_HAT}    ║    ${C_TEXT}▀▄▀${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ║    ${C_FACE}╭──╮${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ╚═══════════════╝${C_RESET}"
+            ;;
+        sleep)
+            echo -e "${C_HAT}    ╔═══════════════╗${C_RESET}"
+            echo -e "${C_HAT}    ║  ${C_TEXT}﹏      ﹏${C_HAT}    ║${C_RESET}"
+            echo -e "${C_HAT}    ║   ${C_TEXT}z Z Z${C_HAT}    ║${C_RESET}"
+            echo -e "${C_HAT}    ║    ${C_TEXT}╭──╮${C_HAT}     ║${C_RESET}"
+            echo -e "${C_HAT}    ╚═══════════════╝${C_RESET}"
+            ;;
+        big)
+            echo -e "${C_HAT}    ╔═══════════════════╗${C_RESET}"
+            echo -e "${C_HAT}    ║  ${C_FACE}╱◉‿◉╲${C_HAT}  │  ║${C_RESET}"
+            echo -e "${C_HAT}    ║  │  ${C_RED}❤${C_HAT}  │  │  ║${C_RESET}"
+            echo -e "${C_HAT}    ║  │ ${C_FACE}╱─╲${C_HAT} │  │  ║${C_RESET}"
+            echo -e "${C_HAT}    ║  ╰─────╯  │  ║${C_RESET}"
+            echo -e "${C_HAT}    ╚═══════════════════╝${C_RESET}"
+            echo -e "${C_HAT}    ╔═══════════════════╗${C_RESET}"
+            echo -e "${C_HAT}    ║  C H A L D O    ║${C_RESET}"
+            echo -e "${C_HAT}    ╚═══════════════════╝${C_RESET}"
+            ;;
+    esac
+}
+
+say_message() {
+    local msg="$1"
+    local msg_len=${#msg}
+    local box_width=$((msg_len + 4))
+
+    echo -e "${C_BUBBLE}╭$(printf '─%.0s' $(seq 1 $box_width))╮${C_RESET}"
+    echo -e "${C_BUBBLE}│  ${C_TEXT}${msg}${C_BUBBLE}  │${C_RESET}"
+    echo -e "${C_BUBBLE}╰$(printf '─%.0s' $(seq 1 $box_width))╯${C_RESET}"
+    echo ""
+}
+
+# ─── Main ─────────────────────────────────────────────────
+
+emotion="${1:-happy}"
+shift 2>/dev/null || true
+message="${*:-}"
+
+# Если сообщение не передано, показываем одно из приветствий
+if [[ -z "$message" ]]; then
+    case "$emotion" in
+        happy)   message="Привет! Я Чалдо! Добро пожаловать в ChaldOS! 🎮" ;;
+        think)   message="Хм... дай-ка подумать... 🤔" ;;
+        work)    message="Работаю! Всё под контролем! 🔧" ;;
+        love)    message="ChaldOS — сделано с ❤ для геймеров!" ;;
+        dance)   message="Ура! 🎉 Всё работает отлично!" ;;
+        warn)    message="Внимание! ⚠️ Проверь настройки!" ;;
+        cool)    message="ChaldOS — лучший выбор для игр! 😎" ;;
+        big)     message="ChaldOS Gaming Edition v2.0!" ;;
+        *)       message="Привет! Я Чалдо! Чем могу помочь?" ;;
+    esac
+fi
+
+# Если сообщение "x" или "ㅤ" — не показываем сообщение, только маскот
+if [[ "$message" == "x" ]]; then
+    show_mascot "$emotion"
+else
+    show_mascot "$emotion"
+    say_message "$message"
+fi
+
+# Если указана эмоция "dance" или "big" — дополнительный вывод
+if [[ "$emotion" == "big" ]]; then
+    echo -e "${C_GREEN}  Добро пожаловать в ChaldOS Gaming Edition!${C_RESET}"
+    echo -e "${C_TEXT}  Версия 2.0 — на базе Arch Linux 🐧${C_RESET}"
+    echo ""
+fi

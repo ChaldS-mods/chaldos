@@ -1,0 +1,21 @@
+pkgname="zstd"
+pkgver="1.5.6"
+pkgdesc="Zstandard — real-time compression algorithm, better ratio than gzip"
+arch="x86_64"
+license="BSD-3-Clause"
+depends=""
+makedepends="make, gcc"
+
+source=("https://github.com/facebook/zstd/releases/download/v${pkgver}/zstd-${pkgver}.tar.gz")
+sha256sums=("SKIP")
+
+build() {
+    make -j$(nproc) prefix=/usr libdir=/usr/lib
+}
+
+package() {
+    make DESTDIR="${pkgdir}" prefix=/usr libdir=/usr/lib install
+    # Strip for size
+    strip "${pkgdir}/usr/bin/zstd" "${pkgdir}/usr/bin/zstdmt" 2>/dev/null || true
+    strip "${pkgdir}/usr/lib/libzstd.so.1.5.6" 2>/dev/null || true
+}

@@ -1,0 +1,22 @@
+pkgname="nnn"
+pkgver="5.0"
+pkgdesc="Tiny, lightning-fast terminal file manager (no curses needed)"
+arch="x86_64"
+license="BSD-2-Clause"
+depends="ncurses"
+
+source=("https://github.com/jarun/nnn/releases/download/v${pkgver}/nnn-v${pkgver}-x86_64-ubuntu-24.04-static.tar.gz")
+sha256sums=("SKIP")
+
+build() {
+    :
+}
+
+package() {
+    install -Dm755 "${srcdir}/nnn-static" "${pkgdir}/usr/bin/nnn" 2>/dev/null || {
+        # Try alternative name
+        install -Dm755 "${srcdir}/nnn" "${pkgdir}/usr/bin/nnn" 2>/dev/null || true
+    }
+    install -d "${pkgdir}/usr/share/nnn"
+    echo "nnn v${pkgver} — nnn is a tiny, lightning-fast terminal file manager" > "${pkgdir}/usr/share/nnn/README"
+}
