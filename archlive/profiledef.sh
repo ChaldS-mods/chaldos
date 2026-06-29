@@ -18,9 +18,6 @@ files=(
 image_compression=("zstd" "-Xcompression-level" "19")
 
 # Build modes: BIOS + UEFI x64 (hybrid ISO for USB + optical)
-buildmodes=("bios" "uefi-x64.systemd-boot.eltorito")
-
-# The GPT variant is for USB-only. We use eltorito for hybrid support.
-# buildmodes=("bios" "uefi-x64.systemd-boot.gpt")
+buildmodes=("iso")
 
 mksignature="false"
